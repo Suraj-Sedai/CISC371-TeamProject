@@ -11,7 +11,7 @@ urlpatterns = [
 
     # User authentication and profile endpoints
     path('api/auth/', include('users.urls')),
-    
+    path('api/workouts/', include('workouts.urls')),
     # Future endpoints
     # path('api/workouts/', include('workouts.urls')),
     # path('api/goals/', include('goals.urls')),

@@ -1,9 +1,25 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from "react";
+import api from "../services/api";
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const [recentWorkouts, setRecentWorkouts] = useState([]);
+
+  useEffect(() => {
+    const fetchRecentWorkouts = async () => {
+      try {
+        const response = await api.get('/workouts/');
+        setRecentWorkouts(response.data);
+      } catch (error) {
+        console.error('Failed to fetch recent workouts:', error);
+      }
+    };
+
+    fetchRecentWorkouts();
+  }, []);
 
   return (
     <div className="page-wrapper">
@@ -51,10 +67,10 @@ const Dashboard = () => {
         <div className="quick-actions">
           <h2>Quick Actions</h2>
           <div className="quick-actions-grid">
-            <button className="quick-action-card">
-              <span className="icon">💪</span>
-              <p>Log Workout</p>
-            </button>
+             <Link to="/workouts" className="quick-action-card">
+               <span className="icon">💪</span>
+               <p>Log Workout</p>
+             </Link>
             <button className="quick-action-card">
               <span className="icon">🥗</span>
               <p>Log Meal</p>
@@ -86,11 +102,23 @@ const Dashboard = () => {
         {/* Recent Activity */}
         <div className="recent-activity">
           <h2>Recent Activity</h2>
-          <div className="empty-state">
-            <span className="icon">📊</span>
-            <p>No activity yet. Start logging your workouts!</p>
+
+          {recentWorkouts.length === 0 ? (
+            <div className="empty-state">
+              <span className="icon">📊</span>
+              <p>No activity yet. Start logging your workouts!</p>
           </div>
-        </div>
+         ) : (
+          <ul>
+            {recentWorkouts.slice(0, 5).map((workout) => (
+              <li key={workout.id} className="recent-workout-item">
+               <strong>{workout.name}</strong> — {workout.duration} min<br />
+               <small>{workout.type} • {workout.intensity} • {workout.date}</small>
+              </li>
+          ))}
+        </ul>
+      )}
+</div>
       </div>
     </div>
   );

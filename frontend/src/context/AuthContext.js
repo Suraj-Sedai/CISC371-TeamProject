@@ -111,7 +111,7 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     updateUserProfile,
-    isAuthenticated: !!user,
+    isAuthenticated: !!localStorage.getItem("accessToken"),
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
