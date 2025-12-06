@@ -15,6 +15,8 @@ urlpatterns = [
     # Future endpoints
     # path('api/workouts/', include('workouts.urls')),
     # path('api/goals/', include('goals.urls')),
+    path("api/goals/", include("goals.urls")),
+
 ]
 
 # Serve media files in development
