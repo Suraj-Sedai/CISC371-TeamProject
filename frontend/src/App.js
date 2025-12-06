@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import Home from './pages/Home';
 import Navbar from './components/layout/Navbar';
+import Workouts from './pages/Workouts';
 import './App.css';
 
 // Protected Route Component
@@ -73,6 +74,14 @@ function AppContent() {
               </PrivateRoute>
             }
           />
+          <Route
+            path="/workouts"
+            element={
+              <PrivateRoute>
+               <Workouts />
+              </PrivateRoute>
+           }
+         />
           <Route
             path="/profile"
             element={
