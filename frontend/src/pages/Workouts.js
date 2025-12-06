@@ -1,96 +1,110 @@
-import React, { useEffect, useState } from 'react';
-import { workoutsAPI } from '../services/api';
+import React, { useEffect, useState } from "react";
+import { workoutsAPI, goalsAPI } from "../services/api";
 
 const Workouts = () => {
   const [workouts, setWorkouts] = useState([]);
+  const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState({ type: '', text: '' });
+  const [message, setMessage] = useState({ type: "", text: "" });
   const [formData, setFormData] = useState({
-    name: '',
-    type: 'Cardio',
-    duration: '',
-    intensity: 'Medium',
-    notes: '',
+    name: "",
+    type: "cardio", // lowercase to match backend choices
+    duration: "",
+    intensity: "Medium",
+    notes: "",
   });
 
-  // Load workouts on mount
-  useEffect(() => {
-    const fetchWorkouts = async () => {
-      try {
-        const response = await workoutsAPI.list();
-        setWorkouts(response.data);
-      } catch (error) {
-        console.error(error);
-        setMessage({ type: 'error', text: 'Failed to load workouts.' });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchWorkouts();
-  }, []);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  // Fetch workouts
+  const fetchWorkouts = async () => {
+    try {
+      const response = await workoutsAPI.list();
+      setWorkouts(response.data);
+    } catch (err) {
+      console.error(err);
+      setMessage({ type: "error", text: "Failed to load workouts." });
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // Fetch goals
+  const fetchGoals = async () => {
+    try {
+      const response = await goalsAPI.list();
+      setGoals(response.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchWorkouts();
+    fetchGoals();
+  }, []);
+
+  // Handle form change
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!formData.name || !formData.duration) {
-      setMessage({ type: 'error', text: 'Workout name and duration are required.' });
+      setMessage({ type: "error", text: "Workout name and duration are required." });
       return;
     }
 
-    try {
-      const payload = {
-        name: formData.name,
-        type: formData.type,
-        duration: Number(formData.duration),
-        intensity: formData.intensity,
-        notes: formData.notes,
-      };
+    const payload = {
+      name: formData.name,
+      type: formData.type.toLowerCase(), // backend expects lowercase
+      duration: Number(formData.duration),
+      intensity: formData.intensity,
+      notes: formData.notes,
+    };
 
+    try {
       const response = await workoutsAPI.create(payload);
-      // Prepend new workout
       setWorkouts((prev) => [response.data, ...prev]);
 
+      // Reset form
       setFormData({
-        name: '',
-        type: 'Cardio',
-        duration: '',
-        intensity: 'Medium',
-        notes: '',
+        name: "",
+        type: "cardio",
+        duration: "",
+        intensity: "Medium",
+        notes: "",
       });
 
-      setMessage({ type: 'success', text: 'Workout logged!' });
-      setTimeout(() => setMessage({ type: '', text: '' }), 2000);
-    } catch (error) {
-      console.error(error);
-      setMessage({ type: 'error', text: 'Could not save workout.' });
+      setMessage({ type: "success", text: "Workout logged!" });
+      setTimeout(() => setMessage({ type: "", text: "" }), 2000);
+
+      // Refresh goals
+      await fetchGoals();
+    } catch (err) {
+      console.error(err);
+      setMessage({ type: "error", text: "Failed to save workout." });
     }
   };
 
+  // Handle delete
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this workout?')) return;
+    if (!window.confirm("Delete this workout?")) return;
 
     try {
       await workoutsAPI.delete(id);
       setWorkouts((prev) => prev.filter((w) => w.id !== id));
-    } catch (error) {
-      console.error(error);
-      setMessage({ type: 'error', text: 'Failed to delete workout.' });
+      await fetchGoals();
+    } catch (err) {
+      console.error(err);
+      setMessage({ type: "error", text: "Failed to delete workout." });
     }
   };
 
   return (
     <div className="page-wrapper">
       <div className="container">
-        {/* Header */}
         <div className="dashboard-welcome">
           <h1>Your Workouts 💪</h1>
           <p>Log and review your recent training sessions.</p>
@@ -98,21 +112,17 @@ const Workouts = () => {
 
         {message.text && (
           <div
-            className={`alert ${message.type === 'error' ? 'alert-danger' : 'alert-success'}`}
-            style={{ marginBottom: '1rem' }}
+            className={`alert ${message.type === "error" ? "alert-error" : "alert-success"}`}
+            style={{ marginBottom: "1rem" }}
           >
             {message.text}
           </div>
         )}
 
         <div className="dashboard-grid">
-          {/* Left: form */}
+          {/* Log workout form */}
           <div className="card">
             <h2>Log a Workout</h2>
-            <p className="subtitle">
-              Add a workout session. Entries are stored in your account on the server.
-            </p>
-
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label htmlFor="name">Workout Name</label>
@@ -129,17 +139,13 @@ const Workouts = () => {
               <div className="form-grid">
                 <div className="form-group">
                   <label htmlFor="type">Type</label>
-                  <select
-                    id="type"
-                    name="type"
-                    value={formData.type}
-                    onChange={handleChange}
-                  >
-                    <option value="Cardio">Cardio</option>
-                    <option value="Strength">Strength</option>
-                    <option value="HIIT">HIIT</option>
-                    <option value="Mobility">Mobility</option>
-                    <option value="Other">Other</option>
+                  <select id="type" name="type" value={formData.type} onChange={handleChange}>
+                    <option value="cardio">Cardio</option>
+                    <option value="strength">Strength</option>
+                    <option value="flexibility">Flexibility</option>
+                    <option value="hiit">HIIT</option>
+                    <option value="mobility">Mobility</option>
+                    <option value="other">Other</option>
                   </select>
                 </div>
 
@@ -152,19 +158,13 @@ const Workouts = () => {
                     min="1"
                     value={formData.duration}
                     onChange={handleChange}
-                    placeholder="30"
                   />
                 </div>
               </div>
 
               <div className="form-group">
                 <label htmlFor="intensity">Intensity</label>
-                <select
-                  id="intensity"
-                  name="intensity"
-                  value={formData.intensity}
-                  onChange={handleChange}
-                >
+                <select id="intensity" name="intensity" value={formData.intensity} onChange={handleChange}>
                   <option value="Low">Low</option>
                   <option value="Medium">Medium</option>
                   <option value="High">High</option>
@@ -183,16 +183,15 @@ const Workouts = () => {
                 />
               </div>
 
-              <button type="submit" className="btn btn-primary">
+              <button type="submit" className="btn btn-primary btn-block">
                 Save Workout
               </button>
             </form>
           </div>
 
-          {/* Right: list */}
+          {/* Recent workouts */}
           <div className="card">
             <h2>Recent Workouts</h2>
-
             {loading ? (
               <div className="empty-state">
                 <span className="icon">⏳</span>
@@ -205,28 +204,18 @@ const Workouts = () => {
               </div>
             ) : (
               <div className="goal-list">
-                {workouts.map((workout) => (
-                  <div key={workout.id} className="goal-item">
+                {workouts.map((w) => (
+                  <div key={w.id} className="goal-item">
                     <div className="goal-header">
-                      <h3>{workout.name}</h3>
-                      <span className="badge">
-                        {workout.type} • {workout.intensity}
-                      </span>
+                      <h3>{w.name}</h3>
+                      <span className="badge">{w.type.charAt(0).toUpperCase() + w.type.slice(1)} • {w.intensity}</span>
                     </div>
                     <div className="goal-meta">
-                      <span>{workout.duration} min</span>
-                      <span>{workout.date}</span>
+                      <span>{w.duration} min</span>
+                      <span>{w.date}</span>
                     </div>
-                    {workout.notes && (
-                      <p className="goal-description">{workout.notes}</p>
-                    )}
-                    <button
-                      type="button"
-                      className="btn btn-danger btn-sm"
-                      onClick={() => handleDelete(workout.id)}
-                    >
-                      Delete
-                    </button>
+                    {w.notes && <p className="goal-description">{w.notes}</p>}
+                    <button className="btn btn-danger btn-sm" onClick={() => handleDelete(w.id)}>Delete</button>
                   </div>
                 ))}
               </div>

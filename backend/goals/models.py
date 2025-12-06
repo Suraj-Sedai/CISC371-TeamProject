@@ -35,9 +35,29 @@ class Goal(models.Model):
     def __str__(self):
         return f"{self.title} - {self.user.email}"
 
+    def update_progress(self, workout):
+        """Auto update progress based on workout."""
+        if self.completed:
+            return
+
+        if self.goal_type == "workout_time":
+            self.current_value += workout.duration
+        elif self.goal_type == "muscle_gain" and workout.type == "strength":
+            self.current_value += 1  # 1 unit per strength workout
+        elif self.goal_type == "weight_loss":
+            # Approximate kg from calories burned
+            self.current_value += workout.calories_burned / 7700
+
+        # Auto mark as completed if reached target
+        if self.current_value >= self.target_value:
+            self.completed = True
+            self.current_value = min(self.current_value, self.target_value)
+
+        self.save()
+
     @property
     def progress_percentage(self):
-        """Return 0–100 progress."""
+        """Return progress percentage (0-100%). Auto-complete goal if >=100%."""
         if self.target_value == 0:
             return 0
         progress = (self.current_value / self.target_value) * 100

@@ -1,26 +1,30 @@
 import React, { useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 
 const Goals = () => {
+  const { user } = useAuth();
   const [goals, setGoals] = useState([]);
-  const [form, setForm] = useState({
+  const [loading, setLoading] = useState(true);
+  const [newGoal, setNewGoal] = useState({
     title: "",
     description: "",
     goal_type: "custom",
     target_value: "",
-    current_value: 0,
     end_date: "",
   });
-
   const [error, setError] = useState("");
 
-  // Fetch goals
+  // Fetch goals and update progress
   const fetchGoals = async () => {
+    setLoading(true);
     try {
-      const res = await api.get("/goals/");
-      setGoals(res.data);
+      const response = await api.get("/goals/");
+      setGoals(response.data);
     } catch (err) {
-      console.error("Failed to load goals:", err);
+      console.error("Failed to fetch goals:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -28,162 +32,179 @@ const Goals = () => {
     fetchGoals();
   }, []);
 
-  // Submit goal
-  const handleSubmit = async (e) => {
+  // Handle input changes for new goal
+  const handleChange = (e) => {
+    setNewGoal({ ...newGoal, [e.target.name]: e.target.value });
+  };
+
+  // Add new goal
+  const handleAddGoal = async (e) => {
     e.preventDefault();
     setError("");
-
-    if (!form.title || !form.target_value || !form.end_date) {
-      setError("Please fill out all required fields.");
+    if (!newGoal.title || !newGoal.target_value || !newGoal.end_date) {
+      setError("Title, target value, and end date are required.");
       return;
     }
 
     try {
-      await api.post("/goals/", form);
-      await fetchGoals();
-
-      setForm({
+      const response = await api.post("/goals/", newGoal);
+      setGoals((prev) => [response.data, ...prev]);
+      setNewGoal({
         title: "",
         description: "",
         goal_type: "custom",
         target_value: "",
-        current_value: 0,
         end_date: "",
       });
     } catch (err) {
       console.error("Failed to create goal:", err);
-      setError("Failed to create goal. Check fields.");
+      setError("Failed to create goal. Please check your input.");
+    }
+  };
+
+  // Mark goal complete
+  const handleComplete = async (goalId) => {
+    try {
+      await api.patch(`/goals/${goalId}/`, { completed: true });
+      setGoals((prev) =>
+        prev.map((goal) =>
+          goal.id === goalId ? { ...goal, completed: true, progress_percentage: 100 } : goal
+        )
+      );
+    } catch (err) {
+      console.error("Failed to complete goal:", err);
     }
   };
 
   // Delete goal
-  const deleteGoal = async (id) => {
-    await api.delete(`/goals/${id}/`);
-    fetchGoals();
+  const handleDelete = async (goalId) => {
+    try {
+      await api.delete(`/goals/${goalId}/`);
+      setGoals((prev) => prev.filter((goal) => goal.id !== goalId));
+    } catch (err) {
+      console.error("Failed to delete goal:", err);
+    }
   };
+
+  // Calculate progress from workouts (if needed)
+  const calculateProgress = (goal) => {
+    return Math.min(goal.progress_percentage || 0, 100);
+  };
+
+  if (loading) {
+    return (
+      <div className="loading">
+        <div className="spinner"></div> Loading Goals...
+      </div>
+    );
+  }
 
   return (
     <div className="page-wrapper">
       <div className="container">
+        <div className="dashboard-welcome">
+          <h1>{user?.first_name || user?.username}'s Goals</h1>
+          <p>Track your progress and complete your goals!</p>
+        </div>
 
-        {/* PAGE TITLE */}
-        <h1 className="page-title">🎯 Your Fitness Goals</h1>
-        <p className="page-subtitle">Set goals and track your progress</p>
-
-        {/* GOAL FORM */}
+        {/* New Goal Form */}
         <div className="form-card">
           <h2>Add New Goal</h2>
-
           {error && <p className="error-text">{error}</p>}
-
-          <form onSubmit={handleSubmit}>
-
-            {/* Title */}
+          <form onSubmit={handleAddGoal}>
             <div className="form-group">
-              <label>Goal Title</label>
+              <label>Title</label>
               <input
                 type="text"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="Lose weight, build muscle, etc."
+                name="title"
+                value={newGoal.title}
+                onChange={handleChange}
+                placeholder="e.g., Lose 5 kg"
               />
             </div>
-
-            {/* Description */}
             <div className="form-group">
-              <label>Description (optional)</label>
+              <label>Description</label>
               <textarea
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder="Details about this goal"
+                name="description"
+                value={newGoal.description}
+                onChange={handleChange}
+                placeholder="Optional description"
               />
             </div>
-
-            {/* Goal Type */}
             <div className="form-group">
               <label>Goal Type</label>
-              <select
-                value={form.goal_type}
-                onChange={(e) => setForm({ ...form, goal_type: e.target.value })}
-              >
+              <select name="goal_type" value={newGoal.goal_type} onChange={handleChange}>
                 <option value="weight_loss">Weight Loss</option>
                 <option value="muscle_gain">Muscle Gain</option>
                 <option value="workout_time">Workout Time</option>
                 <option value="custom">Custom</option>
               </select>
             </div>
-
-            {/* Target Value */}
             <div className="form-group">
               <label>Target Value</label>
               <input
                 type="number"
-                value={form.target_value}
-                onChange={(e) =>
-                  setForm({ ...form, target_value: e.target.value })
-                }
-                placeholder="Example: 5 (kg, hours, etc.)"
+                name="target_value"
+                value={newGoal.target_value}
+                onChange={handleChange}
+                placeholder="e.g., 5"
               />
             </div>
-
-            {/* End Date */}
             <div className="form-group">
               <label>End Date</label>
               <input
                 type="date"
-                value={form.end_date}
-                onChange={(e) =>
-                  setForm({ ...form, end_date: e.target.value })
-                }
+                name="end_date"
+                value={newGoal.end_date}
+                onChange={handleChange}
               />
             </div>
-
-            <button type="submit" className="btn-primary">
+            <button className="btn btn-primary" type="submit">
               Add Goal
             </button>
           </form>
         </div>
 
-        {/* GOAL LIST */}
+        {/* Goals List */}
         <div className="list-card">
-          <h2>Your Goals</h2>
-
           {goals.length === 0 ? (
-            <p className="empty-state">No goals yet. Add one above!</p>
+            <div className="empty-state">
+              <span className="icon">🎯</span>
+              <p>No goals yet. Add your first goal!</p>
+            </div>
           ) : (
-            goals.map((g) => (
-              <div key={g.id} className="list-item goal-item">
+            goals.map((goal) => (
+              <div key={goal.id} className="list-item goal-item">
                 <div className="goal-header">
-                  <h3>{g.title}</h3>
-                  {g.is_overdue && !g.completed && (
-                    <span className="badge badge-danger">Overdue</span>
-                  )}
-                  {g.completed && (
+                  <h3>{goal.title}</h3>
+                  {goal.completed ? (
                     <span className="badge badge-success">Completed</span>
-                  )}
+                  ) : goal.is_overdue ? (
+                    <span className="badge badge-danger">Overdue</span>
+                  ) : null}
                 </div>
-
-                {/* Description */}
-                {g.description && (
-                  <p className="goal-description">{g.description}</p>
-                )}
-
-                {/* Progress */}
+                {goal.description && <p className="goal-description">{goal.description}</p>}
                 <div className="progress-bar">
                   <div
                     className="progress-fill"
-                    style={{ width: `${g.progress_percentage}%` }}
+                    style={{ width: `${calculateProgress(goal)}%` }}
                   ></div>
                 </div>
-                <p className="progress-text">
-                  {g.current_value}/{g.target_value} — {g.progress_percentage}%
-                </p>
-
-                {/* Actions */}
+                <div className="progress-text">
+                  Progress: {calculateProgress(goal)}%
+                </div>
                 <div className="goal-actions">
+                  {!goal.completed && (
+                    <button
+                      className="btn-complete"
+                      onClick={() => handleComplete(goal.id)}
+                    >
+                      Mark Complete
+                    </button>
+                  )}
                   <button
                     className="btn-delete"
-                    onClick={() => deleteGoal(g.id)}
+                    onClick={() => handleDelete(goal.id)}
                   >
                     Delete
                   </button>
