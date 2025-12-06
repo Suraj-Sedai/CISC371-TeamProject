@@ -83,4 +83,11 @@ export const workoutsAPI = {
   update: (id, data) => api.patch(`/workouts/${id}/`, data),
   delete: (id) => api.delete(`/workouts/${id}/`),
 };
+export const goalsAPI = {
+  list: () => api.get('/goals/'),
+  create: (data) => api.post('/goals/', data),
+  update: (id, data) => api.patch(`/goals/${id}/`, data),
+  delete: (id) => api.delete(`/goals/${id}/`),
+};
+
 export default api;

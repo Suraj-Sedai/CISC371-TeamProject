@@ -8,6 +8,8 @@ import Profile from './pages/Profile';
 import Home from './pages/Home';
 import Navbar from './components/layout/Navbar';
 import Workouts from './pages/Workouts';
+import Goals from './pages/Goals';   
+
 import './App.css';
 
 // Protected Route Component
@@ -45,9 +47,12 @@ function AppContent() {
     <Router>
       <div className="App">
         <Navbar />
+
         <Routes>
+
           {/* Public Routes */}
           <Route path="/" element={<Home />} />
+
           <Route
             path="/login"
             element={
@@ -56,6 +61,7 @@ function AppContent() {
               </PublicRoute>
             }
           />
+
           <Route
             path="/register"
             element={
@@ -74,14 +80,25 @@ function AppContent() {
               </PrivateRoute>
             }
           />
+
           <Route
             path="/workouts"
             element={
               <PrivateRoute>
-               <Workouts />
+                <Workouts />
               </PrivateRoute>
-           }
-         />
+            }
+          />
+
+          <Route
+            path="/goals"          
+            element={
+              <PrivateRoute>
+                <Goals />
+              </PrivateRoute>
+            }
+          />
+
           <Route
             path="/profile"
             element={
@@ -91,7 +108,7 @@ function AppContent() {
             }
           />
 
-          {/* Catch all */}
+          {/* Catch-all */}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>

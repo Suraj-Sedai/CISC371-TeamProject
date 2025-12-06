@@ -21,3 +21,7 @@ class GoalSerializer(serializers.ModelSerializer):
             "is_overdue",
         ]
         read_only_fields = ["start_date", "progress_percentage", "is_overdue"]
+        extra_kwargs = {
+            "goal_type": {"required": False},
+            "description": {"required": False},
+        }
