@@ -1166,3 +1166,130 @@ input::placeholder {
     height: 12px;
   }
 }
+.dashboard-page {
+  background: #f5f6fa;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  font-family: 'Inter', sans-serif;
+}
+
+.dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.dashboard-welcome h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+}
+
+.dashboard-welcome p {
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+}
+
+/* Stats Cards */
+.dashboard-stats {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.stat-card {
+  flex: 1;
+  background: white;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  gap: 1rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  transition: transform 0.2s;
+}
+.stat-card:hover {
+  transform: translateY(-3px);
+}
+.stat-icon {
+  font-size: 2rem;
+}
+
+/* Main Grid */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+}
+
+/* Left Column */
+.dashboard-left .chart-card,
+.dashboard-right .chart-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  margin-bottom: 2rem;
+}
+
+.recent-workouts {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.recent-workout-card {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.recent-workout-card:last-child {
+  border-bottom: none;
+}
+
+.type-badge {
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  color: white;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+.type-badge.cardio { background: #4f46e5; }
+.type-badge.strength { background: #f43f5e; }
+.type-badge.hiit { background: #f59e0b; }
+.type-badge.mobility { background: #10b981; }
+.type-badge.other { background: #3b82f6; }
+
+.dashboard-right {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Quick Actions */
+.quick-actions-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.quick-actions-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.quick-action-card {
+  background: #4f46e5;
+  color: white;
+  font-weight: 600;
+  text-align: center;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  transition: transform 0.2s;
+}
+.quick-action-card:hover {
+  transform: translateY(-2px);
+}

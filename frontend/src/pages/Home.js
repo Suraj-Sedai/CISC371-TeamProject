@@ -58,9 +58,9 @@ const Home = () => {
             </div>
           </div>
 
-          {/* Additional Features */}
+          {/* Upcoming Features */}
           <div className="additional-features">
-            <h2>More Amazing Features</h2>
+            <h2>Coming Soon...even more features!</h2>
             <div className="features-list">
               <div className="feature-item">
                 <span className="icon">🥗</span>
