@@ -56,12 +56,12 @@ const Home = () => {
 
             <div className="hero-stats">
               <div className="stat-item">
-                <div className="stat-number">10K+</div>
+                <div className="stat-number">10+</div>
                 <div className="stat-label">Active Users</div>
               </div>
               <div className="stat-divider"></div>
               <div className="stat-item">
-                <div className="stat-number">50K+</div>
+                <div className="stat-number">50+</div>
                 <div className="stat-label">Workouts Logged</div>
               </div>
               <div className="stat-divider"></div>

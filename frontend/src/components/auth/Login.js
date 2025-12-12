@@ -81,11 +81,11 @@ const Login = () => {
 
               <div className="brand-stats">
                 <div className="brand-stat">
-                  <div className="stat-number">10K+</div>
+                  <div className="stat-number">10+</div>
                   <div className="stat-label">Active Users</div>
                 </div>
                 <div className="brand-stat">
-                  <div className="stat-number">50K+</div>
+                  <div className="stat-number">50+</div>
                   <div className="stat-label">Workouts</div>
                 </div>
                 <div className="brand-stat">
