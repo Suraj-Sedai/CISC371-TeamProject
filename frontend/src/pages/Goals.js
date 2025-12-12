@@ -14,8 +14,15 @@ const Goals = () => {
     end_date: "",
   });
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
-  // Fetch goals and update progress
+  const goalTypeOptions = [
+    { value: "weight_loss", label: "Weight Loss", icon: "⚖️", color: "#ef4444" },
+    { value: "muscle_gain", label: "Muscle Gain", icon: "💪", color: "#8b5cf6" },
+    { value: "workout_time", label: "Workout Time", icon: "⏱️", color: "#3b82f6" },
+    { value: "custom", label: "Custom", icon: "🎯", color: "#10b981" },
+  ];
+
   const fetchGoals = async () => {
     setLoading(true);
     try {
@@ -32,15 +39,16 @@ const Goals = () => {
     fetchGoals();
   }, []);
 
-  // Handle input changes for new goal
   const handleChange = (e) => {
     setNewGoal({ ...newGoal, [e.target.name]: e.target.value });
+    setError("");
   };
 
-  // Add new goal
   const handleAddGoal = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccessMessage("");
+
     if (!newGoal.title || !newGoal.target_value || !newGoal.end_date) {
       setError("Title, target value, and end date are required.");
       return;
@@ -56,13 +64,14 @@ const Goals = () => {
         target_value: "",
         end_date: "",
       });
+      setSuccessMessage("Goal created successfully! 🎉");
+      setTimeout(() => setSuccessMessage(""), 3000);
     } catch (err) {
       console.error("Failed to create goal:", err);
       setError("Failed to create goal. Please check your input.");
     }
   };
 
-  // Mark goal complete
   const handleComplete = async (goalId) => {
     try {
       await api.patch(`/goals/${goalId}/`, { completed: true });
@@ -71,147 +80,357 @@ const Goals = () => {
           goal.id === goalId ? { ...goal, completed: true, progress_percentage: 100 } : goal
         )
       );
+      setSuccessMessage("Goal completed! 🎊");
+      setTimeout(() => setSuccessMessage(""), 2000);
     } catch (err) {
       console.error("Failed to complete goal:", err);
     }
   };
 
-  // Delete goal
   const handleDelete = async (goalId) => {
+    if (!window.confirm("Are you sure you want to delete this goal?")) return;
+
     try {
       await api.delete(`/goals/${goalId}/`);
       setGoals((prev) => prev.filter((goal) => goal.id !== goalId));
+      setSuccessMessage("Goal deleted.");
+      setTimeout(() => setSuccessMessage(""), 2000);
     } catch (err) {
       console.error("Failed to delete goal:", err);
     }
   };
 
-  // Calculate progress from workouts (if needed)
   const calculateProgress = (goal) => {
     return Math.min(goal.progress_percentage || 0, 100);
   };
 
+  const getGoalTypeInfo = (type) => {
+    return goalTypeOptions.find(t => t.value === type) || goalTypeOptions[3];
+  };
+
+  const getDaysRemaining = (endDate) => {
+    const today = new Date();
+    const end = new Date(endDate);
+    const diffTime = end - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
   if (loading) {
     return (
-      <div className="loading">
-        <div className="spinner"></div> Loading Goals...
+      <div className="loading-page">
+        <div className="spinner"></div>
+        <p>Loading your goals...</p>
       </div>
     );
   }
 
+  const activeGoals = goals.filter(g => !g.completed);
+  const completedGoals = goals.filter(g => g.completed);
+
   return (
-    <div className="page-wrapper">
-      <div className="container">
-        <div className="dashboard-welcome">
-          <h1>{user?.first_name || user?.username}'s Goals</h1>
-          <p>Track your progress and complete your goals!</p>
+    <div className="goals-page">
+      <div className="page-container">
+        {/* Page Header */}
+        <div className="page-header-modern">
+          <div className="header-content">
+            <div className="header-icon">🎯</div>
+            <div>
+              <h1 className="page-title">{user?.first_name || user?.username}'s Goals</h1>
+              <p className="page-subtitle">Track your progress and achieve your fitness goals</p>
+            </div>
+          </div>
+          <div className="header-stats">
+            <div className="header-stat">
+              <span className="stat-value">{activeGoals.length}</span>
+              <span className="stat-label">Active</span>
+            </div>
+            <div className="header-stat">
+              <span className="stat-value">{completedGoals.length}</span>
+              <span className="stat-label">Completed</span>
+            </div>
+          </div>
         </div>
 
-        {/* New Goal Form */}
-        <div className="form-card">
-          <h2>Add New Goal</h2>
-          {error && <p className="error-text">{error}</p>}
-          <form onSubmit={handleAddGoal}>
-            <div className="form-group">
-              <label>Title</label>
-              <input
-                type="text"
-                name="title"
-                value={newGoal.title}
-                onChange={handleChange}
-                placeholder="e.g., Lose 5 kg"
-              />
+        {/* Success Message */}
+        {successMessage && (
+          <div className="alert-modern alert-success">
+            <div className="alert-icon">✅</div>
+            <div className="alert-content">
+              <p>{successMessage}</p>
             </div>
-            <div className="form-group">
-              <label>Description</label>
-              <textarea
-                name="description"
-                value={newGoal.description}
-                onChange={handleChange}
-                placeholder="Optional description"
-              />
-            </div>
-            <div className="form-group">
-              <label>Goal Type</label>
-              <select name="goal_type" value={newGoal.goal_type} onChange={handleChange}>
-                <option value="weight_loss">Weight Loss</option>
-                <option value="muscle_gain">Muscle Gain</option>
-                <option value="workout_time">Workout Time</option>
-                <option value="custom">Custom</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Target Value</label>
-              <input
-                type="number"
-                name="target_value"
-                value={newGoal.target_value}
-                onChange={handleChange}
-                placeholder="e.g., 5"
-              />
-            </div>
-            <div className="form-group">
-              <label>End Date</label>
-              <input
-                type="date"
-                name="end_date"
-                value={newGoal.end_date}
-                onChange={handleChange}
-              />
-            </div>
-            <button className="btn btn-primary" type="submit">
-              Add Goal
-            </button>
-          </form>
-        </div>
+            <button className="alert-close" onClick={() => setSuccessMessage("")}>×</button>
+          </div>
+        )}
 
-        {/* Goals List */}
-        <div className="list-card">
-          {goals.length === 0 ? (
-            <div className="empty-state">
-              <span className="icon">🎯</span>
-              <p>No goals yet. Add your first goal!</p>
+        {/* Error Message */}
+        {error && (
+          <div className="alert-modern alert-error">
+            <div className="alert-icon">⚠️</div>
+            <div className="alert-content">
+              <p>{error}</p>
             </div>
-          ) : (
-            goals.map((goal) => (
-              <div key={goal.id} className="list-item goal-item">
-                <div className="goal-header">
-                  <h3>{goal.title}</h3>
-                  {goal.completed ? (
-                    <span className="badge badge-success">Completed</span>
-                  ) : goal.is_overdue ? (
-                    <span className="badge badge-danger">Overdue</span>
-                  ) : null}
-                </div>
-                {goal.description && <p className="goal-description">{goal.description}</p>}
-                <div className="progress-bar">
-                  <div
-                    className="progress-fill"
-                    style={{ width: `${calculateProgress(goal)}%` }}
-                  ></div>
-                </div>
-                <div className="progress-text">
-                  Progress: {calculateProgress(goal)}%
-                </div>
-                <div className="goal-actions">
-                  {!goal.completed && (
-                    <button
-                      className="btn-complete"
-                      onClick={() => handleComplete(goal.id)}
+            <button className="alert-close" onClick={() => setError("")}>×</button>
+          </div>
+        )}
+
+        <div className="goals-layout">
+          {/* New Goal Form */}
+          <div className="goal-form-card">
+            <div className="form-card-header">
+              <h2 className="form-card-title">Create New Goal</h2>
+              <p className="form-card-subtitle">Set a target and track your progress</p>
+            </div>
+
+            <form onSubmit={handleAddGoal} className="modern-form">
+              <div className="form-group">
+                <label htmlFor="title" className="form-label">
+                  <span>Goal Title</span>
+                  <span className="label-required">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="title"
+                  name="title"
+                  value={newGoal.title}
+                  onChange={handleChange}
+                  placeholder="e.g., Lose 5 kg, Run 100 km this month"
+                  className="form-input"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="description" className="form-label">Description (optional)</label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={newGoal.description}
+                  onChange={handleChange}
+                  placeholder="Add more details about your goal..."
+                  className="form-textarea"
+                  rows="3"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Goal Type</label>
+                <div className="goal-type-grid">
+                  {goalTypeOptions.map((type) => (
+                    <label
+                      key={type.value}
+                      className={`goal-type-option ${
+                        newGoal.goal_type === type.value ? "selected" : ""
+                      }`}
+                      style={{
+                        borderColor: newGoal.goal_type === type.value ? type.color : "transparent"
+                      }}
                     >
-                      Mark Complete
-                    </button>
-                  )}
-                  <button
-                    className="btn-delete"
-                    onClick={() => handleDelete(goal.id)}
-                  >
-                    Delete
-                  </button>
+                      <input
+                        type="radio"
+                        name="goal_type"
+                        value={type.value}
+                        checked={newGoal.goal_type === type.value}
+                        onChange={handleChange}
+                        className="goal-type-input"
+                      />
+                      <span className="goal-type-icon">{type.icon}</span>
+                      <span className="goal-type-label">{type.label}</span>
+                    </label>
+                  ))}
                 </div>
               </div>
-            ))
-          )}
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="target_value" className="form-label">
+                    <span>Target Value</span>
+                    <span className="label-required">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    id="target_value"
+                    name="target_value"
+                    value={newGoal.target_value}
+                    onChange={handleChange}
+                    placeholder="e.g., 5, 100, 10"
+                    className="form-input"
+                    min="0"
+                    step="0.01"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="end_date" className="form-label">
+                    <span>Target Date</span>
+                    <span className="label-required">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    id="end_date"
+                    name="end_date"
+                    value={newGoal.end_date}
+                    onChange={handleChange}
+                    className="form-input"
+                    min={new Date().toISOString().split('T')[0]}
+                    required
+                  />
+                </div>
+              </div>
+
+              <button type="submit" className="btn btn-primary btn-block btn-large">
+                <span>Create Goal</span>
+                <span className="btn-icon">+</span>
+              </button>
+            </form>
+          </div>
+
+          {/* Goals List */}
+          <div className="goals-list-section">
+            {/* Active Goals */}
+            <div className="goals-category">
+              <div className="category-header">
+                <h2 className="category-title">Active Goals</h2>
+                <span className="category-count">{activeGoals.length}</span>
+              </div>
+
+              {activeGoals.length === 0 ? (
+                <div className="empty-state-modern">
+                  <div className="empty-icon">🎯</div>
+                  <h3 className="empty-title">No active goals</h3>
+                  <p className="empty-description">
+                    Create your first goal to start tracking your progress!
+                  </p>
+                </div>
+              ) : (
+                <div className="goals-grid">
+                  {activeGoals.map((goal) => {
+                    const progress = calculateProgress(goal);
+                    const typeInfo = getGoalTypeInfo(goal.goal_type);
+                    const daysRemaining = getDaysRemaining(goal.end_date);
+                    const isOverdue = daysRemaining < 0;
+
+                    return (
+                      <div key={goal.id} className="goal-card-modern">
+                        <div className="goal-card-header">
+                          <div className="goal-type-badge" style={{ backgroundColor: `${typeInfo.color}15`, color: typeInfo.color }}>
+                            <span className="type-icon">{typeInfo.icon}</span>
+                            <span className="type-label">{typeInfo.label}</span>
+                          </div>
+                          {isOverdue && (
+                            <span className="overdue-badge">Overdue</span>
+                          )}
+                        </div>
+
+                        <h3 className="goal-card-title">{goal.title}</h3>
+
+                        {goal.description && (
+                          <p className="goal-card-description">{goal.description}</p>
+                        )}
+
+                        <div className="goal-progress-section">
+                          <div className="progress-header">
+                            <span className="progress-label">Progress</span>
+                            <span className="progress-percentage">{Math.round(progress)}%</span>
+                          </div>
+                          <div className="progress-bar-modern">
+                            <div
+                              className="progress-fill-modern"
+                              style={{ 
+                                width: `${progress}%`,
+                                backgroundColor: typeInfo.color
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="goal-card-footer">
+                          <div className="goal-deadline">
+                            <span className="deadline-icon">📅</span>
+                            <span className="deadline-text">
+                              {isOverdue 
+                                ? `${Math.abs(daysRemaining)} days overdue`
+                                : daysRemaining === 0
+                                ? "Due today"
+                                : `${daysRemaining} days left`
+                              }
+                            </span>
+                          </div>
+
+                          <div className="goal-actions">
+                            <button
+                              className="btn-icon-action btn-complete"
+                              onClick={() => handleComplete(goal.id)}
+                              title="Mark as complete"
+                            >
+                              ✓
+                            </button>
+                            <button
+                              className="btn-icon-action btn-delete"
+                              onClick={() => handleDelete(goal.id)}
+                              title="Delete goal"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Completed Goals */}
+            {completedGoals.length > 0 && (
+              <div className="goals-category">
+                <div className="category-header">
+                  <h2 className="category-title">Completed Goals</h2>
+                  <span className="category-count">{completedGoals.length}</span>
+                </div>
+
+                <div className="goals-grid">
+                  {completedGoals.map((goal) => {
+                    const typeInfo = getGoalTypeInfo(goal.goal_type);
+
+                    return (
+                      <div key={goal.id} className="goal-card-modern goal-completed">
+                        <div className="goal-card-header">
+                          <div className="goal-type-badge" style={{ backgroundColor: `${typeInfo.color}15`, color: typeInfo.color }}>
+                            <span className="type-icon">{typeInfo.icon}</span>
+                            <span className="type-label">{typeInfo.label}</span>
+                          </div>
+                          <span className="completed-badge">✓ Completed</span>
+                        </div>
+
+                        <h3 className="goal-card-title">{goal.title}</h3>
+
+                        {goal.description && (
+                          <p className="goal-card-description">{goal.description}</p>
+                        )}
+
+                        <div className="goal-card-footer">
+                          <div className="goal-completed-date">
+                            <span className="completed-icon">🎉</span>
+                            <span className="completed-text">Goal achieved!</span>
+                          </div>
+
+                          <button
+                            className="btn-icon-action btn-delete"
+                            onClick={() => handleDelete(goal.id)}
+                            title="Delete goal"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
