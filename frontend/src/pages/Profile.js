@@ -124,19 +124,19 @@ const Profile = () => {
                 {getGenderEmoji(user?.gender)}
               </div>
               <div className="profile-info-modern">
-                <h1 className="profile-name">
+                <h1 className="greeting-text">
                   {user?.first_name && user?.last_name 
                     ? `${user.first_name} ${user.last_name}`
                     : user?.first_name || user?.username}
                 </h1>
-                <p className="profile-email">{user?.email}</p>
+                <p className="email-id">{user?.email}</p>
                 {user?.age && (
                   <div className="profile-quick-stats">
-                    <span className="quick-stat">{user.age} years old</span>
+                    {/* <span className="quick-stat">{user.age} years old</span>
                     {user?.height && <span className="stat-divider">•</span>}
                     {user?.height && <span className="quick-stat">{user.height} cm</span>}
                     {user?.weight && <span className="stat-divider">•</span>}
-                    {user?.weight && <span className="quick-stat">{user.weight} kg</span>}
+                    {user?.weight && <span className="quick-stat">{user.weight} kg</span>} */}
                   </div>
                 )}
               </div>
