@@ -1,1 +1,5 @@
-pip install django djangorestframework 
+django
+djangorestframework
+djangorestframework-simplejwt
+django-cors-headers
+pillow
