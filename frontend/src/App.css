@@ -2333,7 +2333,7 @@ input::placeholder {
 
 .header-stat .stat-label {
   font-size: 0.875rem;
-  color: var(--bg-primary);
+  color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 600;
